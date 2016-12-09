@@ -468,6 +468,47 @@ function template_preprocess_views_data_export_xml_body(&$vars) {
 }
 
 /**
+ * Theme function for XLS file using PHPExcel.
+ */
+function theme_views_data_export_xls_phpexcel_body(&$vars) {
+  _views_data_export_header_shared_preprocess($vars);
+  _views_data_export_body_shared_preprocess($vars);
+
+  foreach ($vars['themed_rows'] as $num => $row) {
+    foreach ($row as $field => $content) {
+        $content = strip_tags($content);
+        $vars['themed_rows'][$num][$field] = trim(preg_replace('/\s+/', ' ', $content));
+      }
+  }
+
+  $complete_array = array_merge(array($vars['header']), $vars['themed_rows']);
+
+  // Loading PHPExcel library.
+  $phpexcelPath = libraries_get_path('PHPExcel');
+  include_once($phpexcelPath . '/Classes/PHPExcel.php');
+  $objPHPExcel = new PHPExcel();
+  $objPHPExcel->setActiveSheetIndex(0);
+  $objPHPExcel->getActiveSheet()->fromArray($complete_array);
+
+  $excel_type = !empty($vars['options']['excel_type']) ? $vars['options']['excel_type'] : 'excel5';
+  switch ($excel_type) {
+    case 'excel5':
+      $objWriter = new PHPExcel_Writer_Excel5($objPHPExcel);
+      break;
+
+    case 'excel2007':
+      $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+      $objWriter->setOffice2003Compatibility(true);
+      break;
+  }
+
+  ob_start();
+  $objWriter->save('php://output');
+  $excelOutput = ob_get_clean();
+  return $excelOutput;
+}
+
+/**
  * Returns a valid XML tag formed from the given input.
  *
  * @param $tag The string that should be made into a valid XML tag.
