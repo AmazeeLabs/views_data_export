@@ -503,18 +503,26 @@ function _views_data_export_xml_tag_clean($tag) {
  * Shared helper function for export preprocess functions.
  */
 function _views_data_export_header_shared_preprocess(&$vars) {
-  $view     = $vars['view'];
-  $fields   = &$view->field;
+  $view = $vars['view'];
+  $fields = $view->field;
   $fields_info = $view->display_handler->get_option('fields');
+
   $vars['header'] = array();
   foreach ($fields as $key => $field) {
-    if (empty($field->options['exclude'])) {
-      if (isset($fields_info) && isset($fields_info[$key]['label'])) {
-        $vars['header'][$key] = check_plain($fields_info[$key]['label']);
-      }
-      else {
-        $vars['header'][$key] = check_plain($field->label());
-      }
+    if (!empty($field->options['exclude'])) {
+      continue;
+    }
+    if ($view->display_handler->get_option('labels_translation')) {
+      $vars['header'][$key] = check_plain($field->label());
+    }
+    elseif (!empty($fields_info[$key]['label'])) {
+      $vars['header'][$key] = check_plain($fields_info[$key]['label']);
+    }
+    elseif (!empty($field->definition['title'])) {
+      $vars['header'][$key] = check_plain($field->definition['title']);
+    }
+    else {
+      $vars['header'][$key] = '';
     }
   }
 }

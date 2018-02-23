@@ -53,6 +53,16 @@ class views_data_export_plugin_display_export extends views_plugin_display_feed 
       return FALSE;
     }
 
+    if ($section === 'labels_translation') {
+      return array('labels_translation');
+    }
+
+    if (!$section) {
+      $sections = parent::defaultable_sections();
+      $sections['labels_translation'] = array('labels_translation');
+      return $sections;
+    }
+
     return parent::defaultable_sections($section);
   }
 
@@ -65,6 +75,12 @@ class views_data_export_plugin_display_export extends views_plugin_display_feed 
     $options['items_per_page'] = array('default' => '0');
     $options['return_path'] = array('default' => '');
     $options['style_plugin']['default'] = 'views_data_export_csv';
+
+    // Should the field labels be translated?
+    $options['labels_translation'] = array(
+      'default' => FALSE,
+      'bool' => TRUE,
+    );
 
     // This is the default size of a segment when doing a batched export.
     $options['segment_size']['default'] = 100;
@@ -96,6 +112,12 @@ class views_data_export_plugin_display_export extends views_plugin_display_feed 
     if (!$this->is_compatible() && $this->get_option('use_batch')) {
       $options['use_batch']['value'] .= ' <strong>' . t('(Warning: incompatible)') . '</strong>';
     }
+
+    $options['labels_translation'] = array(
+      'category' => 'other',
+      'title' => t("Labels translation"),
+      'value' => $this->get_option('labels_translation') ? t("Yes") : t("No"),
+    );
   }
 
   /**
@@ -162,6 +184,15 @@ class views_data_export_plugin_display_export extends views_plugin_display_feed 
         }
         break;
 
+      case 'labels_translation':
+        $form['#title'] .= t("Labels translation");
+        $form['labels_translation'] = array(
+          '#type' => 'checkbox',
+          '#title' => t("Translate the field labels"),
+          '#description' => t("Uncheck this field to get untranslated field labels in the export file."),
+          '#default_value' => $this->get_option('labels_translation'),
+        );
+        break;
     }
   }
 
@@ -188,6 +219,9 @@ class views_data_export_plugin_display_export extends views_plugin_display_feed 
         $this->set_option('use_batch', $form_state['values']['use_batch']);
         $this->set_option('segment_size', $form_state['values']['segment_size']);
         $this->set_option('return_path', $form_state['values']['return_path']);
+        break;
+      case 'labels_translation':
+        $this->set_option('labels_translation', $form_state['values']['labels_translation']);
         break;
     }
   }
